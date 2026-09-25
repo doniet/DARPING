@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -183,6 +184,8 @@ namespace DarPing
         private static extern IntPtr FindWindowEx(IntPtr parent, IntPtr childAfter, string className, string windowName);
         [DllImport("user32.dll")]
         private static extern bool SetWindowPos(IntPtr handle, IntPtr insertAfter, int x, int y, int width, int height, uint flags);
+        [DllImport("user32.dll")]
+        private static extern bool DestroyIcon(IntPtr handle);
 
         [StructLayout(LayoutKind.Sequential)]
         private struct RECT { public int Left; public int Top; public int Right; public int Bottom; }
@@ -244,20 +247,33 @@ namespace DarPing
 
         public static Icon CreateTrayIcon(Color color)
         {
-            var bitmap = new Bitmap(32, 32);
-            using (var graphics = Graphics.FromImage(bitmap)) using (var brush = new SolidBrush(color)) using (var pen = new Pen(Color.White, 2F))
+            var bitmap = new Bitmap(32, 32, PixelFormat.Format32bppArgb);
+            IntPtr iconHandle = IntPtr.Zero;
+            try
             {
-                graphics.Clear(Color.Transparent);
-                graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                graphics.FillEllipse(brush, 3, 3, 26, 26);
-                graphics.DrawEllipse(pen, 4, 4, 24, 24);
-                graphics.DrawArc(pen, 9, 4, 14, 24, 90, 180);
-                graphics.DrawArc(pen, 9, 4, 14, 24, 270, 180);
-                graphics.DrawLine(pen, 5, 16, 27, 16);
+                using (var graphics = Graphics.FromImage(bitmap)) using (var brush = new SolidBrush(color)) using (var pen = new Pen(Color.White, 2F))
+                {
+                    graphics.Clear(Color.Transparent);
+                    graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                    graphics.FillEllipse(brush, 3, 3, 26, 26);
+                    graphics.DrawEllipse(pen, 4, 4, 24, 24);
+                    graphics.DrawArc(pen, 9, 4, 14, 24, 90, 180);
+                    graphics.DrawArc(pen, 9, 4, 14, 24, 270, 180);
+                    graphics.DrawLine(pen, 5, 16, 27, 16);
+                }
+                iconHandle = bitmap.GetHicon();
+                var nativeIcon = Icon.FromHandle(iconHandle);
+                var clonedIcon = (Icon)nativeIcon.Clone();
+                DestroyIcon(iconHandle);
+                iconHandle = IntPtr.Zero;
+                return clonedIcon;
             }
-            var icon = Icon.FromHandle(bitmap.GetHicon());
-            bitmap.Dispose();
-            return icon;
+            catch { return (Icon)SystemIcons.Application.Clone(); }
+            finally
+            {
+                if (iconHandle != IntPtr.Zero) DestroyIcon(iconHandle);
+                bitmap.Dispose();
+            }
         }
 
         public void UpdateReading(MonitorReading reading, string download, string upload)
