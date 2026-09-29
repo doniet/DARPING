@@ -17,6 +17,9 @@ namespace DarPing
         public bool SoundOnOnline { get; set; }
         public bool SoundOnSlow { get; set; }
         public bool SoundOnOffline { get; set; }
+        public bool SoundScheduleEnabled { get; set; }
+        public int SoundStartMinute { get; set; }
+        public int SoundEndMinute { get; set; }
         public int TaskbarTextColorArgb { get; set; }
         public bool StartWithWindows { get; set; }
 
@@ -38,6 +41,8 @@ namespace DarPing
             if (settings.SoundProfileOnline < 0 || settings.SoundProfileOnline > 9) settings.SoundProfileOnline = settings.SoundProfile;
             if (settings.SoundProfileSlow < 0 || settings.SoundProfileSlow > 9) settings.SoundProfileSlow = settings.SoundProfile;
             if (settings.SoundProfileOffline < 0 || settings.SoundProfileOffline > 9) settings.SoundProfileOffline = settings.SoundProfile;
+            settings.SoundStartMinute = Math.Max(0, Math.Min(1439, settings.SoundStartMinute));
+            settings.SoundEndMinute = Math.Max(0, Math.Min(1439, settings.SoundEndMinute));
             if (settings.PlaySound && !settings.SoundOnOnline && !settings.SoundOnSlow && !settings.SoundOnOffline) settings.SoundOnOnline = true;
             if (settings.TaskbarTextColorArgb == 0) settings.TaskbarTextColorArgb = Color.White.ToArgb();
             return settings;

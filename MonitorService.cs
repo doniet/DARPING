@@ -60,7 +60,18 @@ namespace DarPing
 
         private bool ShouldPlay(ConnectionState state)
         {
+            if (!IsWithinSoundSchedule(DateTime.Now.TimeOfDay)) return false;
             return (state == ConnectionState.Online && settings.SoundOnOnline) || (state == ConnectionState.Slow && settings.SoundOnSlow) || (state == ConnectionState.Offline && settings.SoundOnOffline);
+        }
+
+        private bool IsWithinSoundSchedule(TimeSpan time)
+        {
+            if (!settings.SoundScheduleEnabled) return true;
+            var currentMinute = (int)time.TotalMinutes;
+            var start = settings.SoundStartMinute;
+            var end = settings.SoundEndMinute;
+            if (start == end) return true;
+            return start < end ? currentMinute >= start && currentMinute < end : currentMinute >= start || currentMinute < end;
         }
 
         private int GetSoundProfile(ConnectionState state)
